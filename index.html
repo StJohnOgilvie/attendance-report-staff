@@ -1,0 +1,899 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>St John Ogilvie Attendance Report</title>
+
+    <style media="print">
+        body {
+            background: white !important;
+            color: black !important;
+        }
+
+        .header,
+        .button-container,
+        hr {
+            display: none !important;
+        }
+
+        .container {
+            box-shadow: none !important;
+            margin: 0 auto !important;
+            padding: 0 !important;
+            width: 100% !important;
+        }
+
+        .table-wrapper {
+            max-height: none !important;
+            overflow: visible !important;
+        }
+
+        table {
+            width: 100% !important;
+            font-size: 12px !important;
+        }
+
+        thead th {
+            background: #228B22 !important;
+            color: white !important;
+            -webkit-print-color-adjust: exact;
+            print-color-adjust: exact;
+        }
+
+        tbody td {
+            background: white !important;
+            color: black !important;
+        }
+    </style>
+
+
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+            background-color: #f9f9f9;
+            color: #333;
+        }
+
+        .container {
+            max-width: 2000px;
+            width: 95%;
+            margin: 10px auto;
+            background: #ffffff;
+            border-radius: 10px;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+            overflow: hidden;
+            padding: 10px;
+        }
+
+        .header {
+            background: #228B22;
+            color: white;
+            text-align: center;
+            padding: 25px;
+            position: relative;
+            overflow: hidden;
+            border-radius: 8px;
+        }
+
+        .header img {
+            width: 0px;
+            height: 0px;
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            border-radius: 50%;
+        }
+
+        .header-background {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-image: url('https://stjohnogilvie.github.io/attendance-report/SJOBadge.png');
+            background-size: 90px;
+            background-repeat: no-repeat;
+            background-position: right center;
+            opacity: 0.5;
+            pointer-events: none;
+            z-index: 0;
+        }
+
+        .header h1,
+        .header p {
+            position: relative;
+            z-index: 1;
+            margin: 0;
+        }
+
+        .info-section {
+            background: #f4f4f4;
+            padding: 20px;
+            border-radius: 10px;
+            margin: 20px 0;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+        }
+
+        .name {
+            text-align: center;
+            font-size: 24px;
+            font-weight: bold;
+            margin-bottom: 10px;
+        }
+
+        .info-box {
+            display: flex;
+            justify-content: space-around;
+            flex-wrap: nowrap;
+            gap: 15px;
+        }
+
+        .info-box .info-item {
+            flex: 1 1 calc(20%);
+            max-width: calc(20%);
+            min-width: 100px;
+            text-align: center;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+            border-radius: 8px;
+        }
+
+        @media (max-width: 600px) {
+            .info-box {
+                flex-wrap: wrap;
+            }
+
+            .info-box .info-item {
+                flex: 1 1 calc(50% - 15px);
+                max-width: calc(50% - 110px);
+            }
+        }
+
+        .info-box .info-item .header {
+            background: #228B22;
+            color: white;
+            font-weight: bold;
+            padding: 10px;
+            border-top-left-radius: 8px;
+            border-top-right-radius: 8px;
+        }
+
+        .info-box .info-item .body {
+            background: white;
+            color: #333;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-top: none;
+            border-bottom-left-radius: 8px;
+            border-bottom-right-radius: 8px;
+        }
+
+        hr {
+            border: 0;
+            border-top: 1px solid #ddd;
+            margin: 10px 0;
+        }
+
+        .week-beginning {
+            text-align: center;
+            font-size: 12px;
+            font-weight: bold;
+            color: #228B22;
+            margin: 0px 0;
+            background: #f4f4f4;
+            padding: 0px;
+            border-radius: 8px;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+        }
+
+        .table-wrapper {
+            max-width: 100%;
+            margin: 0 auto;
+            max-height: 85vh;
+            /* Or 80vh - restricts table height to screen */
+            overflow-y: auto;
+            /* Makes only the table scroll vertically */
+            overflow-x: auto;
+            /* Keeps horizontal scroll for large tables */
+            padding: 1px;
+            background: #ffffff;
+            border-radius: 0px;
+        }
+
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 0px auto;
+
+        }
+
+        thead th {
+            position: sticky;
+            top: 0;
+            background-color: #228B22;
+            /* Your existing green background */
+            z-index: 2;
+            cursor: pointer;
+        }
+
+        th {
+            border: 1px solid #ddd;
+            text-align: center;
+            padding: 5px;
+            font-size: 14px;
+        }
+
+        td {
+            border: 1px solid #ddd;
+            text-align: center;
+            padding: 5px;
+            font-size: 14px;
+            white-space: nowrap;
+            /* Prevent wrapping ONLY for td */
+        }
+
+
+        table tbody tr:nth-child(odd) {
+            background-color: #e8f5e9;
+        }
+
+        table tbody tr:hover {
+            background-color: #a5d6a7;
+            /* Slightly deeper green on hover */
+        }
+
+
+        th {
+            background: #228B22;
+            color: white;
+        }
+
+        .legend {
+            margin-top: 10px;
+        }
+
+        .legend table {
+            width: 100%;
+            margin: 20px auto;
+        }
+
+        .legend th {
+            background: #228B22;
+            color: white;
+        }
+
+        .legend td {
+            text-align: left;
+        }
+
+        .legend td:first-child {
+            text-align: center;
+            width: 50px;
+        }
+
+
+        a.button {
+            display: inline-block;
+            padding: 10px 20px;
+            background: #000000;
+            color: #FFD700;
+            text-decoration: none;
+            text-align: center;
+            border-radius: 5px;
+        }
+
+        a.button:hover {
+            background: #333333;
+        }
+
+
+
+        .alert-section {
+            background: #ffe5e5;
+            color: #b22222;
+            padding: 20px;
+            border-radius: 10px;
+            margin: 20px 0;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+        }
+
+        .alert-section h3 {
+            margin-bottom: 15px;
+        }
+
+        .alert-section .key-points {
+            text-align: left;
+            margin-top: 15px;
+            padding: 10px;
+            border: 1px solid #b22222;
+            border-radius: 8px;
+            background: #fff6f6;
+        }
+
+        .alert-section .key-points ul {
+            margin: 0;
+            padding-left: 20px;
+        }
+
+        .alert-section .key-points ul li {
+            margin-bottom: 10px;
+        }
+
+        .alert-section .missed-learning {
+            margin-top: 20px;
+        }
+
+        .alert-section table {
+            width: 100%;
+            margin-top: 10px;
+            border-collapse: collapse;
+        }
+
+        .alert-section table {
+            background: white;
+            color: black;
+        }
+
+
+
+        .alert-section th,
+        .alert-section td {
+            border: 1px solid #b22222;
+            text-align: center;
+            padding: 8px;
+        }
+
+        .alert-section th {
+            background: #228b22;
+            color: white;
+        }
+
+
+        /* ############################################################################ */
+
+        /* ######################################################## */
+        /* ATTENDANCE RATING COLOURS */
+        /* ######################################################## */
+
+        .attendance-rating {
+            font-weight: bold;
+            padding: 1px 6px;
+            /* Smaller padding: 2px top/bottom, 8px left/right */
+            border-radius: 10px;
+            text-align: center;
+            display: inline-block;
+            /* <<< important: only grow to fit text */
+            white-space: nowrap;
+            /* <<< important: stop wrapping */
+        }
+
+
+        .excellent {
+            background-color: #28a745 !important;
+            /* Bright Green */
+            color: #ffffff !important;
+            /* White text */
+        }
+
+        .very-good {
+            background-color: #7bc043 !important;
+            /* Soft Green */
+            color: #ffffff !important;
+            /* White text */
+        }
+
+        .good {
+            background-color: #ffc107 !important;
+            /* Yellow */
+            color: #333333 !important;
+            /* Darker text for contrast */
+        }
+
+        .at-risk {
+            background-color: #ff8c00 !important;
+            /* Orange */
+            color: #ffffff !important;
+            /* White text */
+        }
+
+        .poor {
+            background-color: #ff4c4c !important;
+            /* Bright Red */
+            color: #ffffff !important;
+            /* White text */
+        }
+
+        .very-poor {
+            background-color: #b22222 !important;
+            /* Dark Red */
+            color: #ffffff !important;
+            /* White text */
+        }
+
+
+
+
+        /* ############################################################################ */
+
+
+
+        .t-red {
+            color: red;
+            font-weight: bold;
+        }
+
+        .j-amber {
+            color: #ffbf00;
+            /* Amber Colour */
+            font-weight: bold;
+        }
+
+
+        /* This is for stcikign the forname/surnamer
+
+        /* Sticky Forename column */
+        thead th:nth-child(1) {
+            position: sticky;
+            left: 0;
+            background-color: #228B22;
+            z-index: 3;
+            border-right: 1px solid #ccc;
+            min-width: 120px;
+            max-width: 120px;
+        }
+
+        tbody td:nth-child(1) {
+            position: sticky;
+            left: 0;
+            background-color: inherit;
+            z-index: 2;
+            border-right: 1px solid #ccc;
+            min-width: 120px;
+            max-width: 120px;
+        }
+
+        /* Sticky Surname column */
+        thead th:nth-child(2) {
+            position: sticky;
+            left: 120px;
+            background-color: #228B22;
+            z-index: 3;
+            border-right: 1px solid #ccc;
+            min-width: 120px;
+            max-width: 120px;
+        }
+
+        tbody td:nth-child(2) {
+            position: sticky;
+            left: 120px;
+            background-color: inherit;
+            z-index: 2;
+            border-right: 1px solid #ccc;
+            min-width: 120px;
+            max-width: 120px;
+        }
+
+        /* Sticky cells on odd rows (white rows) */
+        tbody tr:nth-child(even) td:nth-child(1),
+        tbody tr:nth-child(even) td:nth-child(2) {
+            background-color: #ffffff;
+            /* Force proper white */
+        }
+
+        /* Sticky cells on even rows (greenish rows) */
+        tbody tr:nth-child(odd) td:nth-child(1),
+        tbody tr:nth-child(odd) td:nth-child(2) {
+            background-color: #e8f5e9;
+            /* Your normal even row colour */
+        }
+
+        /* When hovering a row, also update sticky Forename and Surname background */
+        tbody tr:hover td:nth-child(1),
+        tbody tr:hover td:nth-child(2) {
+            background-color: #a5d6a7;
+            /* Same hover green as the rest */
+        }
+
+        thead th:nth-child(n+7):nth-child(-n+41) {
+            white-space: normal;
+            overflow-wrap: break-word;
+            word-break: break-word;
+            text-align: center;
+            max-width: 30px;
+            min-width: 30px;
+            width: 30px;
+        }
+
+
+
+
+        .button-container {
+            display: flex;
+            justify-content: center;
+            flex-wrap: wrap;
+            gap: 10px;
+            margin-top: 0px;
+            margin-bottom: 0px;
+            /* <<< smaller bottom margin */
+            padding: 0;
+            /* <<< remove any extra padding */
+        }
+
+        /* Narrow Attendance Rating and Attendance columns */
+        thead th:nth-child(5),
+        tbody td:nth-child(5),
+        thead th:nth-child(6),
+        tbody td:nth-child(6) {
+            min-width: 80px;
+            max-width: 80px;
+            width: 80px;
+            text-align: center;
+            white-space: normal;
+            /* Allow wrapping if needed */
+        }
+
+
+
+        thead th small {
+            font-size: 10px;
+            color: #FFD700;
+            margin-left: 5px;
+        }
+
+        .stage-button,
+        .day-button {
+            border: none;
+            padding: 10px 15px;
+            margin: 5px;
+            font-size: 16px;
+            font-weight: bold;
+            border-radius: 100px;
+            /* Round style */
+            cursor: pointer;
+            transition: background-color 0.3s ease, transform 0.2s ease;
+        }
+
+        /* Specific styles for Stage Buttons */
+        .stage-button {
+            background-color: #001F54;
+            /* Navy */
+            color: white;
+        }
+
+        .stage-button:hover {
+            background-color: #001F54;
+            /* Darker navy */
+            transform: scale(1.05);
+        }
+
+        /* Specific styles for Day Buttons */
+        .day-button {
+            background-color: #87ceeb;
+            /* Yellow */
+            color: #333333;
+        }
+
+        .day-button:hover {
+            background-color: #87ceeb;
+            /* Slightly darker yellow */
+            transform: scale(1.05);
+        }
+
+
+        .vertical-separator {
+            width: 2px;
+            background: #ccc;
+            margin: 0 10px;
+        }
+
+
+
+        /* Darker vertical line after Attendance, Mon 7, Tue 7, Wed 7, Thu 7 */
+        thead th:nth-child(6),
+        tbody td:nth-child(6),
+        thead th:nth-child(13),
+        tbody td:nth-child(13),
+        thead th:nth-child(20),
+        tbody td:nth-child(20),
+        thead th:nth-child(27),
+        tbody td:nth-child(27),
+        thead th:nth-child(34),
+        tbody td:nth-child(34) {
+            border-right: 3px solid #333;
+            /* Dark grey thicker line */
+        }
+
+
+
+
+        /* -------------------------- HTML Below ------------------------------------------------------------------------------------------ */
+    </style>
+</head>
+
+<body>
+    <div class="container">
+        <div class="header">
+            <div class="header-background"></div>
+            <h1>Attendance Report</h1>
+            <p>St John Ogilvie High School</p>
+            <img src="https://stjohnogilvie.github.io/attendance-report/SJOBadge.png">
+        </div>
+        <hr>
+        <div class="button-container" style="justify-content: center; flex-wrap: wrap; gap: 20px;">
+            <div class="stage-buttons-group">
+                <button class="stage-button" onclick="filterStage('S1')">S1</button>
+                <button class="stage-button" onclick="filterStage('S2')">S2</button>
+                <button class="stage-button" onclick="filterStage('S3')">S3</button>
+                <button class="stage-button" onclick="filterStage('S4')">S4</button>
+                <button class="stage-button" onclick="filterStage('S5')">S5</button>
+                <button class="stage-button" onclick="filterStage('S6')">S6</button>
+                <button class="stage-button" onclick="filterStage('all')">S1-S6</button>
+            </div>
+
+            <!-- Vertical Separator -->
+            <div class="vertical-separator"></div>
+
+            <div class="day-buttons-group">
+                <button class="day-button" onclick="toggleDay('Mon')">Mon</button>
+                <button class="day-button" onclick="toggleDay('Tue')">Tue</button>
+                <button class="day-button" onclick="toggleDay('Wed')">Wed</button>
+                <button class="day-button" onclick="toggleDay('Thu')">Thu</button>
+                <button class="day-button" onclick="toggleDay('Fri')">Fri</button>
+            </div>
+        </div>
+
+
+
+
+        <!----------------------------------------------------------------- HTML Data Table Data below------------------------------->
+
+
+        <hr>
+
+
+        <div class="table-wrapper">
+            @{AE90AC6C-07F6-4BFA-B4CE-D52B091A0438}
+        </div>
+
+
+
+        <!------------------------------------------------- Java Script Below ------------------------------------------------------------------------------------>
+
+
+        <script>
+            // ########################################################
+            // BASIC FORMATTING FUNCTIONS
+            // ########################################################
+
+            // Highlight 'T' and 'J' codes
+            function highlightAttendanceCodes() {
+                const tableCells = document.querySelectorAll(".table-wrapper table tbody td");
+                tableCells.forEach(cell => {
+                    if (cell.textContent.trim() === 'T') {
+                        cell.classList.add('t-red');
+                    } else if (cell.textContent.trim() === 'J') {
+                        cell.classList.add('j-amber');
+                    }
+                });
+            }
+
+            // Colour attendance rating (Excellent, Very Good, etc.)
+            function colourAttendanceRating() {
+                const rows = document.querySelectorAll('tbody tr');
+                rows.forEach(row => {
+                    const ratingCell = row.cells[4];
+                    if (!ratingCell) return;
+
+                    const ratingText = ratingCell.textContent.trim();
+                    const ratingLower = ratingText.toLowerCase();
+
+                    const span = document.createElement('span');
+                    span.textContent = ratingText;
+                    span.classList.add('attendance-rating');
+
+                    if (ratingLower === 'excellent') {
+                        span.classList.add('excellent');
+                    } else if (ratingLower === 'very good') {
+                        span.classList.add('very-good');
+                    } else if (ratingLower === 'good') {
+                        span.classList.add('good');
+                    } else if (ratingLower === 'at risk') {
+                        span.classList.add('at-risk');
+                    } else if (ratingLower === 'poor') {
+                        span.classList.add('poor');
+                    } else if (ratingLower === 'very poor') {
+                        span.classList.add('very-poor');
+                    }
+
+                    ratingCell.textContent = '';
+                    ratingCell.appendChild(span);
+                });
+            }
+
+            // Add % symbol to Attendance column
+            function addPercentToAttendance() {
+                const rows = document.querySelectorAll('tbody tr');
+                rows.forEach(row => {
+                    const attendanceCell = row.cells[5];
+                    if (!attendanceCell) return;
+
+                    const currentText = attendanceCell.textContent.trim();
+                    if (currentText && !currentText.includes('%') && !isNaN(currentText)) {
+                        attendanceCell.textContent = `${currentText}%`;
+                    }
+                });
+            }
+
+            // ############################
+            // FULL SORTING + ARROW HANDLING
+            // ############################
+
+            document.querySelectorAll("thead th").forEach((header, index) => {
+                header.addEventListener("click", () => {
+                    clearSortIndicators();
+                    sortTable(index);
+                    addSortIndicator(index);
+                });
+            });
+
+            function sortTable(columnIndex) {
+                const table = document.querySelector("table");
+                const tbody = table.tBodies[0];
+                const rowsArray = Array.from(tbody.rows);
+
+                const currentSortCol = table.getAttribute("data-sort-col");
+                const currentSortDir = table.getAttribute("data-sort-dir");
+
+                let newSortDir;
+
+                if (currentSortCol != columnIndex.toString()) {
+                    newSortDir = "asc"; // First click ➔ ascending
+                } else if (currentSortDir === "asc") {
+                    newSortDir = "desc"; // Second click ➔ descending
+                } else if (currentSortDir === "desc") {
+                    newSortDir = "asc"; // Third click ➔ ascending again
+                } else {
+                    newSortDir = "asc"; // fallback
+                }
+
+                rowsArray.sort((a, b) => {
+                    const cellA = a.cells[columnIndex]?.innerText.trim() || "";
+                    const cellB = b.cells[columnIndex]?.innerText.trim() || "";
+
+                    return newSortDir === "asc" ?
+                        cellA.localeCompare(cellB) :
+                        cellB.localeCompare(cellA);
+                });
+
+                rowsArray.forEach(row => tbody.appendChild(row));
+
+                table.setAttribute("data-sort-col", columnIndex);
+                table.setAttribute("data-sort-dir", newSortDir);
+            }
+
+            function clearSortIndicators() {
+                document.querySelectorAll("thead th").forEach(th => {
+                    th.innerHTML = th.getAttribute('data-original-text') || th.innerText;
+                });
+            }
+
+            function addSortIndicator(columnIndex) {
+                const table = document.querySelector("table");
+                const header = document.querySelectorAll("thead th")[columnIndex];
+                const sortDir = table.getAttribute("data-sort-dir");
+
+                let arrow = '';
+                if (sortDir === "asc") {
+                    arrow = "<small>▲</small>";
+                } else if (sortDir === "desc") {
+                    arrow = "<small>▼</small>";
+                }
+
+                header.innerHTML = header.getAttribute('data-original-text') + " " + arrow;
+            }
+
+            // ############################
+            // BUTTON FUNCTIONS
+            // ############################
+
+            function toggleDay(dayPrefix) {
+                const headers = document.querySelectorAll("thead th");
+                let dayVisible = false; // Track if the day's columns are currently visible
+
+                headers.forEach((header, index) => {
+                    if (header.innerText.startsWith(dayPrefix)) {
+                        const cellVisible = header.style.display !== "none";
+                        dayVisible = cellVisible; // Save the visibility of one of the matching columns
+                        toggleColumn(index); // Then toggle the column
+                    }
+                });
+
+                // Set button colour based on new state
+                const dayButtons = document.querySelectorAll('.day-button');
+                dayButtons.forEach(button => {
+                    if (button.innerText === dayPrefix) {
+                        if (dayVisible) {
+                            button.style.backgroundColor = '#d3d3d3'; // off-white
+                            button.style.color = '#333333';
+                        } else {
+                            button.style.backgroundColor = '#87ceeb'; // light blue
+                            button.style.color = '#333333';
+                        }
+                    }
+                });
+            }
+
+            function toggleColumn(colIndex) {
+                const table = document.querySelector("table");
+                const rows = table.rows;
+
+                for (let row of rows) {
+                    const cell = row.cells[colIndex];
+                    if (cell) {
+                        cell.style.display = (cell.style.display === "none") ? "" : "none";
+                    }
+                }
+            }
+
+            function filterStage(stage) {
+                // Deselect all stage buttons first
+                const stageButtons = document.querySelectorAll('.stage-button');
+                stageButtons.forEach(button => {
+                    button.style.backgroundColor = '#d3d3d3'; // default
+                    button.style.color = '#333333';
+                });
+
+                // Highlight the clicked stage button
+                const clickedButton = Array.from(stageButtons).find(button =>
+                    button.innerText === stage || (stage === 'all' && button.innerText === 'S1-S6')
+                );
+                if (clickedButton) {
+                    clickedButton.style.backgroundColor = '#87ceeb'; // light blue
+                    clickedButton.style.color = '#333333';
+                }
+
+                // Filter table rows
+                const rows = document.querySelectorAll('tbody tr');
+                rows.forEach(row => {
+                    const stageCell = row.cells[2]; // Stage is column 3 (index 2)
+                    if (!stageCell) return;
+
+                    const rowStage = stageCell.innerText.trim();
+
+                    if (stage === 'all' || rowStage === stage) {
+                        row.style.display = '';
+                    } else {
+                        row.style.display = 'none';
+                    }
+                });
+            }
+
+            // ########################################################
+            // ON PAGE LOAD
+            // ########################################################
+
+            window.onload = () => {
+                highlightAttendanceCodes();
+                colourAttendanceRating();
+                addPercentToAttendance();
+                filterStage('all'); // Highlight S1-S6 and show all learners
+
+                // Save original header texts for arrow reset
+                document.querySelectorAll("thead th").forEach(th => {
+                    th.setAttribute('data-original-text', th.innerText);
+                });
+            };
+        </script>
+
+
+
+
+
+
+</body>
+
+</html>
