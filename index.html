@@ -656,7 +656,7 @@
 
 
         <div class="table-wrapper">
-            DYNAMIC CONTENT GOES HERE
+            Loading data...
         </div>
 
 
@@ -871,6 +871,33 @@
                     }
                 });
             }
+
+
+
+            // ########################################################
+            // Data Injection
+            // ########################################################
+            fetch('https://glowscotland.sharepoint.com/:u:/r/sites/JOHSTest01/Shared%20Documents/General/Attendance/Staff%20Daily%20Attendance%20Report%201.0.html?csf=1&web=1&e=sFBX7E')
+                .then(response => response.text())
+                .then(html => {
+                    document.getElementById('dynamic-table').innerHTML = html;
+                    highlightAttendanceCodes();
+                    colourAttendanceRating();
+                    addPercentToAttendance();
+                    filterStage('all');
+                })
+                .catch(error => {
+                    document.getElementById('dynamic-table').innerHTML = 'Failed to load attendance report.';
+                    console.error(error);
+                });
+
+
+
+
+
+
+
+
 
             // ########################################################
             // ON PAGE LOAD
