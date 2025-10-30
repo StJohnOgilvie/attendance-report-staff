@@ -764,9 +764,20 @@
                     const cellA = a.cells[columnIndex]?.innerText.trim() || "";
                     const cellB = b.cells[columnIndex]?.innerText.trim() || "";
 
-                    return newSortDir === "asc" ?
-                        cellA.localeCompare(cellB) :
-                        cellB.localeCompare(cellA);
+                    const numericA = parseFloat(cellA.replace(/[^0-9.-]+/g, ""));
+                    const numericB = parseFloat(cellB.replace(/[^0-9.-]+/g, ""));
+
+                    const bothNumeric = !Number.isNaN(numericA) && !Number.isNaN(numericB);
+
+                    if (bothNumeric) {
+                        return newSortDir === "asc"
+                            ? numericA - numericB
+                            : numericB - numericA;
+                    }
+
+                    return newSortDir === "asc"
+                        ? cellA.localeCompare(cellB, undefined, { numeric: true, sensitivity: "base" })
+                        : cellB.localeCompare(cellA, undefined, { numeric: true, sensitivity: "base" });
                 });
 
                 rowsArray.forEach(row => tbody.appendChild(row));
