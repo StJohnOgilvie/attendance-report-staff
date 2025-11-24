@@ -4,9 +4,14 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>St John Ogilvie Attendance Report</title>
+    <title>St John Ogilvie Attendance Anomaly Report</title>
 
     <style media="print">
+        @page {
+            size: A4 landscape;
+            margin: 1cm;
+        }
+
         body {
             background: white !important;
             color: black !important;
@@ -47,6 +52,7 @@
             color: black !important;
         }
     </style>
+
 
 
     <style>
@@ -607,6 +613,44 @@
             /* Dark grey thicker line */
         }
 
+        /* Modal Background */
+        .modal {
+            display: none;
+            position: fixed;
+            z-index: 999;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            overflow: auto;
+            background-color: rgba(0, 0, 0, 0.4);
+        }
+
+        /* Modal Content */
+        .modal-content {
+            background-color: #fefefe;
+            margin: 10% auto;
+            padding: 20px;
+            border: 2px solid #228B22;
+            border-radius: 10px;
+            width: 90%;
+            max-width: 500px;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
+            position: relative;
+        }
+
+        /* Close Button */
+        .close {
+            color: #aaa;
+            float: right;
+            font-size: 24px;
+            font-weight: bold;
+            cursor: pointer;
+        }
+
+        .close:hover {
+            color: #000;
+        }
 
 
 
@@ -618,12 +662,26 @@
     <div class="container">
         <div class="header">
             <div class="header-background"></div>
-            <h1>Attendance Report</h1>
+            <h1>Attendance Anomaly Report</h1>
             <p>St John Ogilvie High School</p>
             <img src="https://stjohnogilvie.github.io/attendance-report/SJOBadge.png">
         </div>
         <hr>
+        <div style="text-align: center; margin: 20px 0;">
+            <input type="text" id="searchInput" placeholder="Search for a pupil..." style="padding: 8px; width: 300px; font-size: 16px; border-radius: 5px; border: 1px solid #ccc;" onkeyup="searchPupil()">
+        </div>
+
         <div class="button-container" style="justify-content: center; flex-wrap: wrap; gap: 20px;">
+
+            <!-- Legend Button on its own -->
+            <div>
+                <button class="stage-button" onclick="openLegend()">Legend</button>
+            </div>
+
+
+            <!-- Vertical Separator after Legend -->
+            <div class="vertical-separator"></div>
+
             <div class="stage-buttons-group">
                 <button class="stage-button" onclick="filterStage('S1')">S1</button>
                 <button class="stage-button" onclick="filterStage('S2')">S2</button>
@@ -634,7 +692,7 @@
                 <button class="stage-button" onclick="filterStage('all')">S1-S6</button>
             </div>
 
-            <!-- Vertical Separator -->
+            <!-- Existing Vertical Separator -->
             <div class="vertical-separator"></div>
 
             <div class="day-buttons-group">
@@ -645,269 +703,413 @@
                 <button class="day-button" onclick="toggleDay('Fri')">Fri</button>
             </div>
         </div>
+    </div>
 
 
 
 
-        <!----------------------------------------------------------------- HTML Data Table Data below------------------------------->
+
+    <hr>
 
 
-        <hr>
+    <div class="table-wrapper">
+        <!------ HTML Data Table Data ------->
+@{body('Create_HTML_table')}
+        <!------ HTML Data Table Data ------->
+    </div>
 
 
-        <div class="table-wrapper">
-            Loading data...
-        </div>
+
+    <!------------------------------------------------- Java Script Below ------------------------------------------------------------------------------------>
 
 
+    <script>
+        // ########################################################
+        // BASIC FORMATTING FUNCTIONS
+        // ########################################################
 
-        <!------------------------------------------------- Java Script Below ------------------------------------------------------------------------------------>
+        // Highlight 'T' and 'J' codes
+        function highlightAttendanceCodes() {
+            const tableCells = document.querySelectorAll(".table-wrapper table tbody td");
+            tableCells.forEach(cell => {
+                if (cell.textContent.trim() === 'T') {
+                    cell.classList.add('t-red');
+                } else if (cell.textContent.trim() === 'J') {
+                    cell.classList.add('j-amber');
+                }
+            });
+        }
+
+        // Colour attendance rating (Excellent, Very Good, etc.)
+        function colourAttendanceRating() {
+            const rows = document.querySelectorAll('tbody tr');
+            rows.forEach(row => {
+                const ratingCell = row.cells[4];
+                if (!ratingCell) return;
+
+                const ratingText = ratingCell.textContent.trim();
+                const ratingLower = ratingText.toLowerCase();
+
+                const span = document.createElement('span');
+                span.textContent = ratingText;
+                span.classList.add('attendance-rating');
+
+                if (ratingLower === 'excellent') {
+                    span.classList.add('excellent');
+                } else if (ratingLower === 'very good') {
+                    span.classList.add('very-good');
+                } else if (ratingLower === 'good') {
+                    span.classList.add('good');
+                } else if (ratingLower === 'at risk') {
+                    span.classList.add('at-risk');
+                } else if (ratingLower === 'poor') {
+                    span.classList.add('poor');
+                } else if (ratingLower === 'very poor') {
+                    span.classList.add('very-poor');
+                }
+
+                ratingCell.textContent = '';
+                ratingCell.appendChild(span);
+            });
+        }
+
+        // Add % symbol to Attendance column
+        function addPercentToAttendance() {
+            const rows = document.querySelectorAll('tbody tr');
+            rows.forEach(row => {
+                const attendanceCell = row.cells[5];
+                if (!attendanceCell) return;
+
+                const currentText = attendanceCell.textContent.trim();
+                if (currentText && !currentText.includes('%') && !isNaN(currentText)) {
+                    attendanceCell.textContent = `${currentText}%`;
+                }
+            });
+        }
+
+        // ############################
+        // FULL SORTING + ARROW HANDLING
+        // ############################
+
+        document.querySelectorAll("thead th").forEach((header, index) => {
+            header.addEventListener("click", () => {
+                clearSortIndicators();
+                sortTable(index);
+                addSortIndicator(index);
+            });
+        });
 
 
-        <script>
-            // ########################################################
-            // BASIC FORMATTING FUNCTIONS
-            // ########################################################
+        function sortTable(columnIndex) {
+            const table = document.querySelector("table");
+            const tbody = table.tBodies[0];
+            const rowsArray = Array.from(tbody.rows);
 
-            // Highlight 'T' and 'J' codes
-            function highlightAttendanceCodes() {
-                const tableCells = document.querySelectorAll(".table-wrapper table tbody td");
-                tableCells.forEach(cell => {
-                    if (cell.textContent.trim() === 'T') {
-                        cell.classList.add('t-red');
-                    } else if (cell.textContent.trim() === 'J') {
-                        cell.classList.add('j-amber');
-                    }
-                });
+            const currentSortCol = table.getAttribute("data-sort-col");
+            const currentSortDir = table.getAttribute("data-sort-dir");
+
+            let newSortDir;
+
+            if (currentSortCol != columnIndex.toString()) {
+                newSortDir = "asc";
+            } else if (currentSortDir === "asc") {
+                newSortDir = "desc";
+            } else {
+                newSortDir = "asc";
             }
 
-            // Colour attendance rating (Excellent, Very Good, etc.)
-            function colourAttendanceRating() {
-                const rows = document.querySelectorAll('tbody tr');
-                rows.forEach(row => {
-                    const ratingCell = row.cells[4];
-                    if (!ratingCell) return;
+            rowsArray.sort((a, b) => {
+                let cellA = a.cells[columnIndex]?.innerText.trim() || "";
+                let cellB = b.cells[columnIndex]?.innerText.trim() || "";
 
-                    const ratingText = ratingCell.textContent.trim();
-                    const ratingLower = ratingText.toLowerCase();
+                // ----- NUMERIC SORT FOR PERCENTAGES -----
+                const percentA = cellA.endsWith("%") ? parseFloat(cellA.replace("%", "")) : null;
+                const percentB = cellB.endsWith("%") ? parseFloat(cellB.replace("%", "")) : null;
 
-                    const span = document.createElement('span');
-                    span.textContent = ratingText;
-                    span.classList.add('attendance-rating');
+                if (percentA !== null && percentB !== null) {
+                    return newSortDir === "asc" ? percentA - percentB : percentB - percentA;
+                }
 
-                    if (ratingLower === 'excellent') {
-                        span.classList.add('excellent');
-                    } else if (ratingLower === 'very good') {
-                        span.classList.add('very-good');
-                    } else if (ratingLower === 'good') {
-                        span.classList.add('good');
-                    } else if (ratingLower === 'at risk') {
-                        span.classList.add('at-risk');
-                    } else if (ratingLower === 'poor') {
-                        span.classList.add('poor');
-                    } else if (ratingLower === 'very poor') {
-                        span.classList.add('very-poor');
-                    }
+                // ----- GENERAL NUMERIC SORT -----
+                const numA = parseFloat(cellA);
+                const numB = parseFloat(cellB);
 
-                    ratingCell.textContent = '';
-                    ratingCell.appendChild(span);
-                });
-            }
+                const aIsNum = !isNaN(numA);
+                const bIsNum = !isNaN(numB);
 
-            // Add % symbol to Attendance column
-            function addPercentToAttendance() {
-                const rows = document.querySelectorAll('tbody tr');
-                rows.forEach(row => {
-                    const attendanceCell = row.cells[5];
-                    if (!attendanceCell) return;
+                if (aIsNum && bIsNum) {
+                    return newSortDir === "asc" ? numA - numB : numB - numA;
+                }
 
-                    const currentText = attendanceCell.textContent.trim();
-                    if (currentText && !currentText.includes('%') && !isNaN(currentText)) {
-                        attendanceCell.textContent = `${currentText}%`;
-                    }
-                });
-            }
-
-            // ############################
-            // FULL SORTING + ARROW HANDLING
-            // ############################
-
-            document.querySelectorAll("thead th").forEach((header, index) => {
-                header.addEventListener("click", () => {
-                    clearSortIndicators();
-                    sortTable(index);
-                    addSortIndicator(index);
-                });
+                // ----- FALLBACK TO TEXT SORT -----
+                return newSortDir === "asc" ?
+                    cellA.localeCompare(cellB) :
+                    cellB.localeCompare(cellA);
             });
 
-            function sortTable(columnIndex) {
-                const table = document.querySelector("table");
-                const tbody = table.tBodies[0];
-                const rowsArray = Array.from(tbody.rows);
+            rowsArray.forEach(row => tbody.appendChild(row));
 
-                const currentSortCol = table.getAttribute("data-sort-col");
-                const currentSortDir = table.getAttribute("data-sort-dir");
+            table.setAttribute("data-sort-col", columnIndex);
+            table.setAttribute("data-sort-dir", newSortDir);
+        }
 
-                let newSortDir;
 
-                if (currentSortCol != columnIndex.toString()) {
-                    newSortDir = "asc"; // First click ➔ ascending
-                } else if (currentSortDir === "asc") {
-                    newSortDir = "desc"; // Second click ➔ descending
-                } else if (currentSortDir === "desc") {
-                    newSortDir = "asc"; // Third click ➔ ascending again
-                } else {
-                    newSortDir = "asc"; // fallback
+
+
+
+
+
+        function clearSortIndicators() {
+            document.querySelectorAll("thead th").forEach(th => {
+                th.innerHTML = th.getAttribute('data-original-text') || th.innerText;
+            });
+        }
+
+        function addSortIndicator(columnIndex) {
+            const table = document.querySelector("table");
+            const header = document.querySelectorAll("thead th")[columnIndex];
+            const sortDir = table.getAttribute("data-sort-dir");
+
+            let arrow = '';
+            if (sortDir === "asc") {
+                arrow = "<small>▲</small>";
+            } else if (sortDir === "desc") {
+                arrow = "<small>▼</small>";
+            }
+
+            header.innerHTML = header.getAttribute('data-original-text') + " " + arrow;
+        }
+
+        // ############################
+        // BUTTON FUNCTIONS
+        // ############################
+
+        function toggleDay(dayPrefix) {
+            const headers = document.querySelectorAll("thead th");
+            let dayVisible = false; // Track if the day's columns are currently visible
+
+            headers.forEach((header, index) => {
+                if (header.innerText.startsWith(dayPrefix)) {
+                    const cellVisible = header.style.display !== "none";
+                    dayVisible = cellVisible; // Save the visibility of one of the matching columns
+                    toggleColumn(index); // Then toggle the column
                 }
+            });
 
-                rowsArray.sort((a, b) => {
-                    const cellA = a.cells[columnIndex]?.innerText.trim() || "";
-                    const cellB = b.cells[columnIndex]?.innerText.trim() || "";
-
-                    const numericA = parseFloat(cellA.replace(/[^0-9.-]+/g, ""));
-                    const numericB = parseFloat(cellB.replace(/[^0-9.-]+/g, ""));
-
-                    const bothNumeric = !Number.isNaN(numericA) && !Number.isNaN(numericB);
-
-                    if (bothNumeric) {
-                        return newSortDir === "asc"
-                            ? numericA - numericB
-                            : numericB - numericA;
-                    }
-
-                    return newSortDir === "asc"
-                        ? cellA.localeCompare(cellB, undefined, { numeric: true, sensitivity: "base" })
-                        : cellB.localeCompare(cellA, undefined, { numeric: true, sensitivity: "base" });
-                });
-
-                rowsArray.forEach(row => tbody.appendChild(row));
-
-                table.setAttribute("data-sort-col", columnIndex);
-                table.setAttribute("data-sort-dir", newSortDir);
-            }
-
-            function clearSortIndicators() {
-                document.querySelectorAll("thead th").forEach(th => {
-                    th.innerHTML = th.getAttribute('data-original-text') || th.innerText;
-                });
-            }
-
-            function addSortIndicator(columnIndex) {
-                const table = document.querySelector("table");
-                const header = document.querySelectorAll("thead th")[columnIndex];
-                const sortDir = table.getAttribute("data-sort-dir");
-
-                let arrow = '';
-                if (sortDir === "asc") {
-                    arrow = "<small>▲</small>";
-                } else if (sortDir === "desc") {
-                    arrow = "<small>▼</small>";
-                }
-
-                header.innerHTML = header.getAttribute('data-original-text') + " " + arrow;
-            }
-
-            // ############################
-            // BUTTON FUNCTIONS
-            // ############################
-
-            function toggleDay(dayPrefix) {
-                const headers = document.querySelectorAll("thead th");
-                let dayVisible = false; // Track if the day's columns are currently visible
-
-                headers.forEach((header, index) => {
-                    if (header.innerText.startsWith(dayPrefix)) {
-                        const cellVisible = header.style.display !== "none";
-                        dayVisible = cellVisible; // Save the visibility of one of the matching columns
-                        toggleColumn(index); // Then toggle the column
-                    }
-                });
-
-                // Set button colour based on new state
-                const dayButtons = document.querySelectorAll('.day-button');
-                dayButtons.forEach(button => {
-                    if (button.innerText === dayPrefix) {
-                        if (dayVisible) {
-                            button.style.backgroundColor = '#d3d3d3'; // off-white
-                            button.style.color = '#333333';
-                        } else {
-                            button.style.backgroundColor = '#87ceeb'; // light blue
-                            button.style.color = '#333333';
-                        }
-                    }
-                });
-            }
-
-            function toggleColumn(colIndex) {
-                const table = document.querySelector("table");
-                const rows = table.rows;
-
-                for (let row of rows) {
-                    const cell = row.cells[colIndex];
-                    if (cell) {
-                        cell.style.display = (cell.style.display === "none") ? "" : "none";
-                    }
-                }
-            }
-
-            function filterStage(stage) {
-                // Deselect all stage buttons first
-                const stageButtons = document.querySelectorAll('.stage-button');
-                stageButtons.forEach(button => {
-                    button.style.backgroundColor = '#d3d3d3'; // default
-                    button.style.color = '#333333';
-                });
-
-                // Highlight the clicked stage button
-                const clickedButton = Array.from(stageButtons).find(button =>
-                    button.innerText === stage || (stage === 'all' && button.innerText === 'S1-S6')
-                );
-                if (clickedButton) {
-                    clickedButton.style.backgroundColor = '#87ceeb'; // light blue
-                    clickedButton.style.color = '#333333';
-                }
-
-                // Filter table rows
-                const rows = document.querySelectorAll('tbody tr');
-                rows.forEach(row => {
-                    const stageCell = row.cells[2]; // Stage is column 3 (index 2)
-                    if (!stageCell) return;
-
-                    const rowStage = stageCell.innerText.trim();
-
-                    if (stage === 'all' || rowStage === stage) {
-                        row.style.display = '';
+            // Set button colour based on new state
+            const dayButtons = document.querySelectorAll('.day-button');
+            dayButtons.forEach(button => {
+                if (button.innerText === dayPrefix) {
+                    if (dayVisible) {
+                        button.style.backgroundColor = '#d3d3d3'; // off-white
+                        button.style.color = '#333333';
                     } else {
-                        row.style.display = 'none';
+                        button.style.backgroundColor = '#87ceeb'; // light blue
+                        button.style.color = '#333333';
                     }
-                });
+                }
+            });
+        }
+
+        function toggleColumn(colIndex) {
+            const table = document.querySelector("table");
+            const rows = table.rows;
+
+            for (let row of rows) {
+                const cell = row.cells[colIndex];
+                if (cell) {
+                    cell.style.display = (cell.style.display === "none") ? "" : "none";
+                }
+            }
+        }
+
+        function filterStage(stage) {
+            // Deselect all stage buttons first
+            const stageButtons = document.querySelectorAll('.stage-button');
+            stageButtons.forEach(button => {
+                button.style.backgroundColor = '#d3d3d3'; // default
+                button.style.color = '#333333';
+            });
+
+            // Highlight the clicked stage button
+            const clickedButton = Array.from(stageButtons).find(button =>
+                button.innerText === stage || (stage === 'all' && button.innerText === 'S1-S6')
+            );
+            if (clickedButton) {
+                clickedButton.style.backgroundColor = '#87ceeb'; // light blue
+                clickedButton.style.color = '#333333';
             }
 
+            // Filter table rows
+            const rows = document.querySelectorAll('tbody tr');
+            rows.forEach(row => {
+                const stageCell = row.cells[2]; // Stage is column 3 (index 2)
+                if (!stageCell) return;
+
+                const rowStage = stageCell.innerText.trim();
+
+                if (stage === 'all' || rowStage === stage) {
+                    row.style.display = '';
+                } else {
+                    row.style.display = 'none';
+                }
+            });
+        }
+
+        function openLegend() {
+            document.getElementById("legendModal").style.display = "block";
+        }
+
+        function closeLegend() {
+            document.getElementById("legendModal").style.display = "none";
+        }
+
+        // Optional: Close modal if user clicks outside it
+        window.onclick = function(event) {
+            const modal = document.getElementById("legendModal");
+            if (event.target === modal) {
+                modal.style.display = "none";
+            }
+        };
 
 
-            // ########################################################
-            // Data Injection
-            // ########################################################
-
-
-            // ########################################################
-            // ON PAGE LOAD
-            // ########################################################
-
-            window.onload = () => {
-                highlightAttendanceCodes();
-                colourAttendanceRating();
-                addPercentToAttendance();
-                filterStage('all'); // Highlight S1-S6 and show all learners
-
-                // Save original header texts for arrow reset
-                document.querySelectorAll("thead th").forEach(th => {
-                    th.setAttribute('data-original-text', th.innerText);
-                });
+        function addAttendanceTooltips() {
+            const codeMeanings = {
+                "-": "Present",
+                "~": "In school but ntop in class",
+                "T": "TBC / Unexplained Absence",
+                "D": "Self Certified / Explained Absence (Parent/Carer)",
+                "U": "Truancy or Unauthorised Absence",
+                "J": "Late to Class",
+                "P": "Permission (e.g. Medical Appointment)",
+                "H": "Holiday",
+                "=": "Part Time Timetable (Not in school)",
+                "O": "Other attendance out of school"
             };
-        </script>
+
+            const tableCells = document.querySelectorAll(".table-wrapper table tbody td");
+
+            tableCells.forEach(cell => {
+                const text = cell.textContent.trim();
+                if (codeMeanings[text]) {
+                    cell.setAttribute("title", codeMeanings[text]);
+                }
+            });
+        }
 
 
+
+        function searchPupil() {
+            const input = document.getElementById("searchInput").value.toLowerCase();
+            const rows = document.querySelectorAll("tbody tr");
+
+            rows.forEach(row => {
+                const forename = row.cells[0].textContent.toLowerCase();
+                const surname = row.cells[1].textContent.toLowerCase();
+                const matches = forename.includes(input) || surname.includes(input);
+                row.style.display = matches ? "" : "none";
+            });
+        }
+
+
+
+
+        // ########################################################
+        // Data Injection
+        // ########################################################
+
+
+        // ########################################################
+        // ON PAGE LOAD
+        // ########################################################
+
+        window.onload = () => {
+            highlightAttendanceCodes();
+            colourAttendanceRating();
+            addPercentToAttendance();
+            filterStage('all');
+            addAttendanceTooltips(); // <-- Add this
+            document.querySelectorAll("thead th").forEach(th => {
+                th.setAttribute('data-original-text', th.innerText);
+            });
+        };
+    </script>
+
+
+    <div id="legendModal" class="modal">
+        <div class="modal-content">
+            <span class="close" onclick="closeLegend()">&times;</span>
+            <h2 style="text-align: center;">Attendance Legend</h2>
+            <table style="width: 100%; table-layout: fixed; border-collapse: collapse;">
+                <colgroup>
+                    <col style="width: 60px;">
+                    <col>
+                </colgroup>
+                <thead>
+                    <tr>
+                        <th style="text-align: center; padding: 8px; border-bottom: 1px solid #ccc;">Code</th>
+                        <th style="text-align: centre; padding: 8px; border-bottom: 1px solid #ccc;">Meaning</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td style="text-align: center; padding: 8px;">–</td>
+                        <td style="padding: 8px;">Present</td>
+                    </tr>
+                    <tr>
+                        <td style="text-align: center; padding: 8px;">J</td>
+                        <td style="padding: 8px;">Late to Class</td>
+                    </tr>
+                    <tr>
+                        <td style="text-align: center; padding: 8px;">P</td>
+                        <td style="padding: 8px;">Permission (e.g. Medical Appointment)</td>
+                    </tr>
+
+                    <tr>
+                        <td style="text-align: center; padding: 8px;">~</td>
+                        <td style="padding: 8px;">In school but not in class</td>
+                    </tr>
+
+                    <tr>
+                        <td style="text-align: center; padding: 8px;">T</td>
+                        <td style="padding: 8px;">TBC / Unexplained Absence</td>
+                    </tr>
+
+
+                    <tr>
+                        <td style="text-align: center; padding: 8px;">D</td>
+                        <td style="padding: 8px;">Self Certified / Explained Absence (Parent/Carer)</td>
+                    </tr>
+
+
+                    <tr>
+                        <td style="text-align: center; padding: 8px;">U</td>
+                        <td style="padding: 8px;">Truancy or Unauthorised Absence</td>
+                    </tr>
+
+
+
+
+
+
+
+
+                    <tr>
+                        <td style="text-align: center; padding: 8px;">H</td>
+                        <td style="padding: 8px;">Holiday</td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+
+
+
+
+</body>
+
+</html>
 
 
 
